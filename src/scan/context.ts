@@ -2,6 +2,7 @@ import { basename, join } from 'node:path'
 import { readJsonc } from '../util/jsonc.js'
 import { HOME, ancestors, isDir, isFile, tilde } from '../util/walk.js'
 import type { Scope } from './types.js'
+import { gitToplevel } from './git.js'
 
 export interface SettingsFile {
   path: string
@@ -20,8 +21,15 @@ export interface ScanContext {
   /** settings files in precedence order: weakest (user) → strongest (project local) */
   settingsFiles: SettingsFile[]
   claudeJson: Record<string, any>
-  /** ~/.claude.json .projects["<root>"] */
+  /** ~/.claude.json .projects["<projectEntryKey>"] */
   projectEntry: Record<string, any>
+  /**
+   * The .projects key Claude Code uses for this dir: the exact root when it
+   * exists, else the git worktree toplevel (Claude Code keys local scope by
+   * repo root, so a subdir of a repo shares its parent's entry), else the
+   * nearest ancestor with an entry. undefined when nothing matched.
+   */
+  projectEntryKey?: string
   harnessRoot?: string
   workspace?: string
   watch: Set<string>
@@ -40,6 +48,15 @@ function detectWorkspace(dirs: string[], harnessRoot?: string): string | undefin
     if (isFile(join(d, 'projects.yaml'))) return d
   }
   return undefined
+}
+
+function resolveProjectEntryKey(claudeJson: Record<string, any>, root: string, dirs: string[]): string | undefined {
+  const projects: Record<string, unknown> = claudeJson.projects ?? {}
+  if (projects[root]) return root
+  const top = gitToplevel(root)
+  if (top && top !== root && projects[top]) return top
+  // nearest ancestor (excluding root itself and $HOME) that Claude Code knows about
+  return dirs.find((d) => d !== root && d !== HOME && Boolean(projects[d]))
 }
 
 export function buildContext(rootInput: string): ScanContext {
@@ -84,7 +101,8 @@ export function buildContext(rootInput: string): ScanContext {
 
   const claudeJson = readJsonc<Record<string, any>>(join(HOME, '.claude.json')) ?? {}
   track(join(HOME, '.claude.json'))
-  const projectEntry = (claudeJson.projects?.[root] as Record<string, any> | undefined) ?? {}
+  const projectEntryKey = resolveProjectEntryKey(claudeJson, root, dirs)
+  const projectEntry = (projectEntryKey ? claudeJson.projects?.[projectEntryKey] as Record<string, any> | undefined : undefined) ?? {}
 
   return {
     root,
@@ -95,6 +113,7 @@ export function buildContext(rootInput: string): ScanContext {
     settingsFiles,
     claudeJson,
     projectEntry,
+    projectEntryKey,
     harnessRoot,
     workspace,
     watch,

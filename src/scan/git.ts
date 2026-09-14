@@ -5,6 +5,11 @@ function git(root: string, args: string[]): string {
   return execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim()
 }
 
+/** Toplevel of the git worktree containing `root`, or undefined outside a repo. */
+export function gitToplevel(root: string): string | undefined {
+  try { return git(root, ['rev-parse', '--show-toplevel']) || undefined } catch { return undefined }
+}
+
 export function scanGit(root: string): GitInfo {
   try {
     git(root, ['rev-parse', '--is-inside-work-tree'])

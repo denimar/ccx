@@ -1,4 +1,4 @@
-import { join } from 'node:path'
+import { basename, join } from 'node:path'
 import { readJsonc } from '../util/jsonc.js'
 import { envKeys, isInlineSecret, looksSecret, redact, redactArgs } from '../util/mask.js'
 import { HOME, isFile, tilde } from '../util/walk.js'
@@ -48,9 +48,13 @@ export function scanMcp(ctx: ScanContext, plugins: PluginEntry[]): McpEntry[] {
     found.push(entry(name, raw, 'user', 'user', join(HOME, '.claude.json')))
   }
 
-  // 2. this project's entry inside ~/.claude.json
+  // 2. this project's entry inside ~/.claude.json (keyed the way Claude Code
+  //    keys it — see resolveProjectEntryKey; may be the repo root of a subdir)
+  const localLabel = ctx.projectEntryKey && ctx.projectEntryKey !== ctx.root
+    ? `project (local · ${basename(ctx.projectEntryKey)})`
+    : 'project (local)'
   for (const [name, raw] of Object.entries(ctx.projectEntry.mcpServers ?? {})) {
-    found.push(entry(name, raw, 'project', 'project (local)', join(HOME, '.claude.json')))
+    found.push(entry(name, raw, 'project', localLabel, join(HOME, '.claude.json')))
   }
 
   // 3. .mcp.json at every ancestor (git-shareable, needs approval)
