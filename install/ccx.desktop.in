@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=ccx
+GenericName=Claude Code HUD
+Comment=Open a project with Claude Code on the left and its live infra HUD on the right
+Exec=@KITTY@ --class ccx --title ccx -o allow_remote_control=yes -o listen_on=unix:@ccx-{kitty_pid} -o enabled_layouts=splits,stack -e @CCX@ pick
+Icon=ccx
+Terminal=false
+StartupNotify=true
+StartupWMClass=ccx
+Categories=Development;Utility;TerminalEmulator;
+Keywords=claude;ai;mcp;skills;hud;

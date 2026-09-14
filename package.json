@@ -1,0 +1,61 @@
+{
+  "name": "ccx",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Live Claude Code infrastructure HUD — splits your terminal: Claude Code on the left, every skill, MCP server, hook, agent and CLAUDE.md that is actually active on the right.",
+  "keywords": [
+    "claude-code",
+    "cli",
+    "tui",
+    "mcp",
+    "skills",
+    "kitty",
+    "ink"
+  ],
+  "license": "MIT",
+  "author": "Denimar de Moraes",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/denimar/ccx.git"
+  },
+  "type": "module",
+  "bin": {
+    "ccx": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "install",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "chokidar": "^5.0.0",
+    "ink": "^7.1.1",
+    "react": "^19.3.0",
+    "smol-toml": "^1.4.2",
+    "string-width": "^8.1.0",
+    "yaml": "^2.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.2.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}

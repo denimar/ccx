@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+# Installs ccx for the current user: builds it, puts `ccx` on PATH, enables
+# kitty remote control, and adds a desktop entry pinned to the GNOME dock.
+# Safe to re-run — every edit it makes to your files is a marked, idempotent block.
+set -euo pipefail
+
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+BIN_DIR="${HOME}/.local/bin"
+APP_DIR="${HOME}/.local/share/applications"
+ICON_DIR="${HOME}/.local/share/icons/hicolor"
+KITTY_CONF="${HOME}/.config/kitty/kitty.conf"
+ZSHRC="${HOME}/.zshrc"
+DESKTOP="${APP_DIR}/ccx.desktop"
+BEGIN="# >>> ccx >>>"
+END="# <<< ccx <<<"
+
+say()  { printf '\033[38;2;203;166;247m  ◆\033[0m %s\n' "$*"; }
+ok()   { printf '\033[38;2;166;227;161m  ✔\033[0m %s\n' "$*"; }
+warn() { printf '\033[38;2;249;226;175m  ▲\033[0m %s\n' "$*"; }
+
+uninstall() {
+  say "removing ccx"
+  rm -f "${BIN_DIR}/ccx" "${DESKTOP}"
+  for s in 48 64 128 256; do rm -f "${ICON_DIR}/${s}x${s}/apps/ccx.png"; done
+  for f in "${KITTY_CONF}" "${ZSHRC}"; do
+    [[ -f "$f" ]] && sed -i "/^${BEGIN}$/,/^${END}$/d" "$f" && ok "cleaned $f"
+  done
+  if command -v gsettings >/dev/null 2>&1; then
+    python3 - <<'PY' || true
+import subprocess, ast
+cur = ast.literal_eval(subprocess.run(['gsettings','get','org.gnome.shell','favorite-apps'],
+                                      capture_output=True, text=True).stdout.strip())
+new = [a for a in cur if a != 'ccx.desktop']
+if new != cur:
+    subprocess.run(['gsettings','set','org.gnome.shell','favorite-apps', str(new)])
+PY
+    ok "unpinned from the dock"
+  fi
+  exit 0
+}
+
+[[ "${1:-}" == "--uninstall" ]] && uninstall
+
+# ---- 1. build ---------------------------------------------------------------
+say "building ccx"
+cd "$REPO"
+if command -v pnpm >/dev/null 2>&1; then pnpm install --silent && pnpm build >/dev/null
+else npm install --silent && npm run build >/dev/null; fi
+chmod +x "${REPO}/dist/cli.js"
+ok "built ${REPO}/dist/cli.js"
+
+# ---- 2. PATH ----------------------------------------------------------------
+mkdir -p "$BIN_DIR"
+ln -sfn "${REPO}/dist/cli.js" "${BIN_DIR}/ccx"
+ok "linked ${BIN_DIR}/ccx"
+case ":${PATH}:" in *":${BIN_DIR}:"*) ;; *) warn "${BIN_DIR} is not on your PATH — add it to ~/.zshrc" ;; esac
+
+# ---- 3. kitty remote control ------------------------------------------------
+# ccx drives kitty's own splits rather than tmux, because tmux breaks the kitty
+# graphics protocol and Claude Code would stop rendering images inline.
+mkdir -p "$(dirname "$KITTY_CONF")"; touch "$KITTY_CONF"
+if grep -qF "$BEGIN" "$KITTY_CONF"; then
+  ok "kitty.conf already configured"
+else
+  cat >> "$KITTY_CONF" <<KITTY
+${BEGIN}
+allow_remote_control socket-only
+listen_on unix:@ccx-{kitty_pid}
+enabled_layouts splits,stack,tall
+${END}
+KITTY
+  ok "configured kitty.conf (restart kitty to activate)"
+fi
+
+# ---- 4. icon + desktop entry ------------------------------------------------
+for s in 48 64 128 256; do
+  mkdir -p "${ICON_DIR}/${s}x${s}/apps"
+  cp -f "${REPO}/install/icon-${s}.png" "${ICON_DIR}/${s}x${s}/apps/ccx.png"
+done
+command -v gtk-update-icon-cache >/dev/null 2>&1 && gtk-update-icon-cache -f -t "$ICON_DIR" >/dev/null 2>&1 || true
+ok "installed icons"
+
+mkdir -p "$APP_DIR"
+KITTY_BIN="$(command -v kitty || echo kitty)"
+sed -e "s|@KITTY@|${KITTY_BIN}|g" -e "s|@CCX@|${BIN_DIR}/ccx|g" \
+    "${REPO}/install/ccx.desktop.in" > "$DESKTOP"
+chmod +x "$DESKTOP"
+command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$APP_DIR" >/dev/null 2>&1 || true
+ok "installed ${DESKTOP}"
+
+# ---- 5. pin to the dock -----------------------------------------------------
+if command -v gsettings >/dev/null 2>&1 && gsettings get org.gnome.shell favorite-apps >/dev/null 2>&1; then
+  python3 - <<'PY'
+import subprocess, ast
+get = subprocess.run(['gsettings','get','org.gnome.shell','favorite-apps'], capture_output=True, text=True)
+cur = ast.literal_eval(get.stdout.strip())
+if 'ccx.desktop' not in cur:
+    subprocess.run(['gsettings','set','org.gnome.shell','favorite-apps', str(cur + ['ccx.desktop'])], check=True)
+    print('  \033[38;2;166;227;161m✔\033[0m pinned ccx to the dock')
+else:
+    print('  \033[38;2;166;227;161m✔\033[0m already pinned to the dock')
+PY
+else
+  warn "GNOME not detected — skipping the dock shortcut"
+fi
+
+# ---- 6. zsh hint hook -------------------------------------------------------
+if [[ -f "$ZSHRC" ]] && grep -qF "$BEGIN" "$ZSHRC"; then
+  ok "zsh hook already installed"
+elif [[ -f "$ZSHRC" ]]; then
+  { echo "$BEGIN"; echo "source \"${REPO}/install/shell-hook.zsh\""; echo "$END"; } >> "$ZSHRC"
+  ok "added the chpwd hint hook to ~/.zshrc"
+fi
+
+echo
+say "done — next steps"
+echo "     1. restart kitty completely (remote control is a startup option)"
+echo "     2. cd into any project and run: ccx"
+echo "     3. or click the ccx icon in the dock to pick a project"
+echo "     4. ccx doctor   verifies all of the above"
+echo
