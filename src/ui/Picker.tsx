@@ -69,7 +69,7 @@ export function Picker({ onPick }: { onPick: (path: string) => void }): React.Re
 
   return (
     <Box flexDirection="column">
-      <Box borderStyle="round" borderColor={color.mauve} paddingX={1}>
+      <Box paddingX={1}>
         <Text color={color.mauve} bold>{icon.logo} ccx </Text>
         <Text color={color.muted}>open a project</Text>
       </Box>
@@ -87,7 +87,7 @@ export function Picker({ onPick }: { onPick: (path: string) => void }): React.Re
               <Box width={30} marginRight={2}>
                 <Text color={selected ? color.text : color.subtext} bold={selected} wrap="truncate-end"> {c.name}</Text>
               </Box>
-              <Text color={color.muted} wrap="truncate-end">{c.group}</Text>
+              <Text color={selected ? color.subtext : color.muted} wrap="truncate-end">{c.group}</Text>
             </Box>
           )
         })}

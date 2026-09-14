@@ -13,21 +13,34 @@ plugin caches, and a `CLAUDE.md` chain that can be several levels deep. Working 
 ```
 $ cd ~/work/my-project
 $ ccx
-┌─ claude ─────────────────────┬─ ccx · my-project ──────────────┐
-│ > _                          │  ◆ ccx  my-project   master ●3  │
-│                              │                                 │
-│                              │  ▾ Memory        4              │
-│                              │      CLAUDE.md   project        │
-│                              │      CLAUDE.md   workspace      │
-│                              │  ▾ Skills       14   ▲2 broken  │
-│                              │      e2e-test    project  ● own │
-│                              │      harness-sync global  ↗ link│
-│                              │  ▸ MCP           4   ●●○!       │
-│                              │  ▸ Hooks         6              │
-│                              │  ▸ Permissions  40 allow · 6 deny│
-│                              │  ▸ Health       ▲ 3             │
-└──────────────────────────────┴─────────────────────────────────┘
+┌─ claude ─────────────────────┬─ ccx · my-project ────────────────┐
+│ > _                          │ ◆ ccx  my-project      master ●3  │
+│                              │ work › my-project                 │
+│                              │                                   │
+│                              │ ▾ Memory                        4 │
+│                              │     CLAUDE.md             6L 291b │
+│                              │     AGENTS.md                link │
+│                              │                                   │
+│                              │ ▾ Skills                  14 · ▲2 │
+│                              │   ❯ e2e-test                  own │
+│                              │     harness-sync             link │
+│                              │     dangling               broken │
+│                              │                                   │
+│                              │ ▾ MCP                           4 │
+│                              │     playwright              ready │
+│                              │     vanta                    auth │
+│                              │                                   │
+│                              │ ▸ Permissions         40 · 6 deny │
+│                              │ ▸ Health                   3 · ✘1 │
+│                              │ ───────────────────────────────── │
+│                              │ ✘ 1 error  ▲ 2   press !          │
+│                              │ broken link → ~/.claude/skills/…  │
+└──────────────────────────────┴───────────────────────────────────┘
 ```
+
+Names are coloured by where they come from — this directory, the workspace above it, the harness
+root, `~/.claude`, a plugin — and the right-hand column says the one thing that matters about each
+row in a word: `own`, `link`, `broken`, `ready`, `failed`, `auth`, `off`. `?` shows the legend.
 
 The panel watches every file it read. When Claude edits `.mcp.json` or drops a new skill in the
 left pane, the right pane updates itself.

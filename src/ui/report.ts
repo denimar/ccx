@@ -1,6 +1,6 @@
 import { basename } from 'node:path'
 import type { ProjectReport } from '../scan/types.js'
-import { bytes, color, icon, statusIcon } from './theme.js'
+import { bytes, color, icon, statusWord } from './theme.js'
 
 const NO_COLOR = Boolean(process.env.NO_COLOR) || !process.stdout.isTTY
 
@@ -42,7 +42,7 @@ export function renderReport(r: ProjectReport, opts: ReportOptions = {}): string
 
   section('Memory', r.memory.files.length, r.memory.autoMemoryFiles ? `+ ${r.memory.autoMemoryFiles} auto-memories` : '')
   for (const f of r.memory.files) {
-    const note = f.symlinkTo ? `${icon.link} symlink` : f.isImportStub ? `→ @${basename(f.imports[0] ?? '')}` : `${f.lines}L ${bytes(f.bytes)}`
+    const note = f.symlinkTo ? 'link' : f.isImportStub ? `→ @${basename(f.imports[0] ?? '')}` : `${f.lines}L ${bytes(f.bytes)}`
     item(f.kind, f.label, note)
   }
   if (r.memory.autoMemoryDirectory) item('memory/', 'auto-memory', `${r.memory.autoMemoryFiles} files`)
@@ -54,7 +54,7 @@ export function renderReport(r: ProjectReport, opts: ReportOptions = {}): string
   const ownSkills = r.skills.filter((s) => !s.plugin)
   if (!opts.compact) {
     for (const s of ownSkills) {
-      item(s.name, s.label, s.broken ? 'BROKEN LINK' : s.origin === 'real' ? 'own' : `link${s.hops > 1 ? ` ×${s.hops}` : ''}`)
+      item(s.name, s.label, s.broken ? 'broken' : s.origin === 'real' ? 'own' : `link${s.hops > 1 ? ` ×${s.hops}` : ''}`)
     }
     const byPlugin = new Map<string, number>()
     for (const s of r.skills) if (s.plugin) byPlugin.set(s.plugin, (byPlugin.get(s.plugin) ?? 0) + 1)
@@ -62,7 +62,7 @@ export function renderReport(r: ProjectReport, opts: ReportOptions = {}): string
   }
 
   section('MCP', r.mcp.length)
-  for (const m of r.mcp) item(m.name, m.transport, `${statusIcon(m.status)} ${m.label}${m.enabled ? '' : ' (disabled)'}`)
+  for (const m of r.mcp) item(m.name, m.transport, !m.enabled ? 'off' : m.status === 'unknown' ? m.label : statusWord(m.status))
 
   const ownAgents = r.agents.filter((a) => !a.plugin)
   section('Agents', r.agents.length, r.agents.length - ownAgents.length ? `${r.agents.length - ownAgents.length} from plugins` : '')

@@ -23,6 +23,7 @@ export const icon = {
   logo: NERD ? '◆' : '*',
   collapsed: NERD ? '▸' : '>',
   expanded: NERD ? '▾' : 'v',
+  marker: NERD ? '❯' : '>',
   bullet: NERD ? '·' : '-',
   link: NERD ? '↗' : '@',
   real: NERD ? '●' : '#',
@@ -31,20 +32,48 @@ export const icon = {
   warn: NERD ? '▲' : '!',
   err: NERD ? '✘' : 'x',
   good: NERD ? '✔' : 'v',
-  auth: NERD ? '!' : '!',
+  auth: '!',
   branch: NERD ? '⎇' : 'br',
   dirty: NERD ? '●' : '*',
   sep: NERD ? '›' : '>',
   dot: '·',
+  rule: NERD ? '─' : '-',
+  track: NERD ? '│' : '|',
+  thumb: NERD ? '┃' : '#',
+  arrow: NERD ? '→' : '->',
 } as const
 
+/**
+ * Scope is carried by the *colour of the name*, not by a repeated text column:
+ * in a 46-column pane a scope label only ever showed up as `personal-har…`.
+ * Brightest is what this directory itself defines; plugins — which arrive in
+ * bulk — recede the furthest.
+ */
 export const scopeColor: Record<string, string> = {
-  project: color.green,
-  workspace: color.blue,
+  project: color.text,
+  workspace: color.sapphire,
   harness: color.mauve,
   ancestor: color.subtext,
   user: color.peach,
-  plugin: color.pink,
+  plugin: color.muted,
+}
+
+/** Legend order: tightest scope first, the way the panel reads top to bottom. */
+export const SCOPES = ['project', 'workspace', 'harness', 'ancestor', 'user', 'plugin'] as const
+
+export function scopeTone(scope?: string): string {
+  return (scope && scopeColor[scope]) || color.text
+}
+
+/** MCP health as a word — the panel says `ready`, never a bare dot. */
+export function statusWord(status: string): string {
+  switch (status) {
+    case 'connected': return 'ready'
+    case 'failed': return 'failed'
+    case 'auth': return 'auth'
+    case 'pending': return 'pending'
+    default: return 'unknown'
+  }
 }
 
 export function statusColor(status: string): string {
