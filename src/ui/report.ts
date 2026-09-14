@@ -77,10 +77,6 @@ export function renderReport(r: ProjectReport, opts: ReportOptions = {}): string
   section('Hooks', r.hooks.length, [...events].map(([e, n]) => `${e} ${n}`).join(' · '))
   if (!opts.compact) for (const h of r.hooks) item(h.event, h.matcher, h.plugin ?? h.label)
 
-  const allow = r.permissions.filter((p) => p.kind === 'allow').length
-  const deny = r.permissions.filter((p) => p.kind === 'deny').length
-  section('Permissions', r.permissions.length, `${allow} allow · ${deny} deny`)
-
   const on = r.plugins.filter((p) => p.enabled)
   section('Plugins', on.length, `${r.plugins.length - on.length} off`)
   for (const p of on) item(p.name, p.version, `${p.contributes.skills} skills · ${p.contributes.hooks} hooks`)

@@ -167,6 +167,5 @@ describe('scan', () => {
     expect(r.harness.registered).toBe(true)
     expect(r.health.some((h) => h.title.includes('dangling'))).toBe(true)
     expect(r.health.some((h) => h.title.includes('leaky'))).toBe(true)
-    expect(r.permissions.filter((p) => p.kind === 'deny')).toHaveLength(1)
   })
 })

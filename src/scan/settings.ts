@@ -1,7 +1,7 @@
 import { looksSecret, redact } from '../util/mask.js'
 import { tilde } from '../util/walk.js'
 import type { ScanContext } from './context.js'
-import type { PermissionEntry, SettingEntry } from './types.js'
+import type { SettingEntry } from './types.js'
 
 const SHOWN_KEYS = [
   'model', 'effortLevel', 'theme', 'tui', 'outputStyle', 'statusLine',
@@ -49,21 +49,6 @@ export function scanSettings(ctx: ScanContext): SettingEntry[] {
   }
 
   return [...merged.values()].sort((a, b) => a.key.localeCompare(b.key))
-}
-
-export function scanPermissions(ctx: ScanContext): PermissionEntry[] {
-  const out: PermissionEntry[] = []
-  for (const sf of ctx.settingsFiles) {
-    const perms = sf.data.permissions
-    if (!perms || typeof perms !== 'object') continue
-    for (const kind of ['allow', 'deny', 'ask'] as const) {
-      for (const rule of (perms[kind] ?? []) as string[]) {
-        out.push({ rule: redact(String(rule)), kind, source: tilde(sf.path), scope: sf.scope, label: sf.label })
-      }
-    }
-  }
-  const order = { deny: 0, ask: 1, allow: 2 }
-  return out.sort((a, b) => order[a.kind] - order[b.kind] || a.rule.localeCompare(b.rule))
 }
 
 /** defaultMode / additionalDirectories, resolved across the settings chain. */

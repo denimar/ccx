@@ -20,7 +20,6 @@ function reportSignature(r: ProjectReport): string {
     r.agents.map((a) => a.path).join(','),
     r.commands.map((c) => c.path).join(','),
     r.hooks.map((h) => h.event + h.command).join(','),
-    r.permissions.map((p) => p.kind + p.rule).join(','),
     r.plugins.map((p) => p.id + p.enabled + p.version).join(','),
     r.settings.map((x) => x.key + x.value).join(','),
     r.health.map((h) => h.title).join(','),

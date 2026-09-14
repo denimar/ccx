@@ -26,7 +26,7 @@ export interface Row {
 }
 
 export const SECTIONS = [
-  'Memory', 'Skills', 'MCP', 'Agents', 'Commands', 'Hooks', 'Permissions', 'Plugins', 'Settings', 'Health',
+  'Memory', 'Skills', 'MCP', 'Agents', 'Commands', 'Hooks', 'Plugins', 'Settings', 'Health',
 ] as const
 export type SectionName = (typeof SECTIONS)[number]
 
@@ -262,22 +262,6 @@ export function buildRows(report: ProjectReport, expanded: Set<string>, mcpLoadi
         path: h.source,
         haystack: `${h.event} ${h.matcher} ${h.command} ${h.label}`.toLowerCase(),
         detail: `${h.command}${h.statusMessage ? `   “${h.statusMessage}”` : ''}`,
-      })))
-    }
-  }
-
-  // ---- Permissions ------------------------------------------------------
-  {
-    const deny = report.permissions.filter((p) => p.kind === 'deny').length
-    if (section(ctx, 'Permissions', report.permissions.length, deny ? `${deny} deny` : '', color.muted,
-      'merged allow / deny rules across every settings file')) {
-      emit(ctx, report.permissions.map((p) => makeItem(ctx, {
-        key: `pm:${p.kind}:${p.rule}:${p.source}`,
-        label: p.rule, labelColor: p.kind === 'deny' ? color.red : scopeTone(p.scope),
-        state: p.kind, stateColor: p.kind === 'deny' ? color.red : p.kind === 'ask' ? color.yellow : color.green,
-        path: p.source,
-        haystack: `${p.rule} ${p.kind} ${p.label}`.toLowerCase(),
-        detail: `${p.kind} ${icon.sep} ${p.label}`,
       })))
     }
   }

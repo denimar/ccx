@@ -30,7 +30,6 @@ $ ccx
 │                              │     playwright              ready │
 │                              │     vanta                    auth │
 │                              │                                   │
-│                              │ ▸ Permissions         40 · 6 deny │
 │                              │ ▸ Health                   3 · ✘1 │
 │                              │ ───────────────────────────────── │
 │                              │ ✘ 1 error  ▲ 2   press !          │
@@ -54,7 +53,6 @@ left pane, the right pane updates itself.
 | **MCP** | servers merged from all five places they can be declared, transport inferred when `type` is missing, gating flags honoured, plus live `✔ / ✘ / !` health |
 | **Agents / Commands** | subagents and slash commands from project, ancestors and plugins — `.md` and `.toml` alike |
 | **Hooks** | what will actually fire, including hooks inlined in a plugin manifest, grouped by event with their matchers |
-| **Permissions** | the merged allow / deny / ask rules and which file each came from |
 | **Plugins** | enabled state, version, and what each one contributes |
 | **Health** | broken symlinks, settings pointing at directories that no longer exist, unapproved MCP servers, and **plaintext credentials sitting in config files** |
 

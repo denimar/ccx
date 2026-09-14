@@ -8,7 +8,7 @@ function report(over: Partial<ProjectReport> = {}): ProjectReport {
     root: '/tmp/app', name: 'app', scopeChain: ['ws', 'app'], scannedAt: '', durationMs: 1,
     git: { isRepo: true, branch: 'master', dirty: 0 },
     memory: { files: [], autoMemoryFiles: 0 },
-    skills: [], mcp: [], agents: [], commands: [], hooks: [], permissions: [], settings: [], plugins: [],
+    skills: [], mcp: [], agents: [], commands: [], hooks: [], settings: [], plugins: [],
     harness: { isHarness: false, orphanLayers: [] },
     health: [], watchPaths: [],
     ...over,

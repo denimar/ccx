@@ -12,7 +12,7 @@ import { scanHooks } from './hooks.js'
 import { applyHealth, scanMcp } from './mcp.js'
 import { scanMemory } from './memory.js'
 import { scanPlugins } from './plugins.js'
-import { scanPermissions, scanSettings } from './settings.js'
+import { scanSettings } from './settings.js'
 import { scanSkills } from './skills.js'
 import type { McpEntry, ProjectReport } from './types.js'
 
@@ -43,7 +43,6 @@ export function scan(rootInput: string): ProjectReport {
   const agents = scanAgents(ctx, plugins)
   const commands = scanCommands(ctx, plugins)
   const hooks = scanHooks(ctx, plugins)
-  const permissions = scanPermissions(ctx)
   const settings = scanSettings(ctx)
   const harness = scanHarness(ctx)
   const health = scanHealth(ctx, { skills, mcp, plugins, harness, memory })
@@ -55,7 +54,7 @@ export function scan(rootInput: string): ProjectReport {
     scannedAt: new Date().toISOString(),
     durationMs: Date.now() - started,
     git: scanGit(root),
-    memory, skills, mcp, agents, commands, hooks, permissions, settings, plugins, harness, health,
+    memory, skills, mcp, agents, commands, hooks, settings, plugins, harness, health,
     watchPaths: [...ctx.watch],
   }
 }

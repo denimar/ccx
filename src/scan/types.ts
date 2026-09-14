@@ -98,14 +98,6 @@ export interface HookEntry {
   plugin?: string
 }
 
-export interface PermissionEntry {
-  rule: string
-  kind: 'allow' | 'deny' | 'ask'
-  source: string
-  scope: Scope
-  label: string
-}
-
 export interface SettingEntry {
   key: string
   value: string
@@ -169,7 +161,6 @@ export interface ProjectReport {
   agents: AgentEntry[]
   commands: CommandEntry[]
   hooks: HookEntry[]
-  permissions: PermissionEntry[]
   settings: SettingEntry[]
   plugins: PluginEntry[]
   harness: HarnessInfo
