@@ -1,5 +1,6 @@
 import { execFile } from 'node:child_process'
 import { resolve } from 'node:path'
+import { resolveBin } from '../util/env.js'
 import { HOME, isDir, isFile } from '../util/walk.js'
 import { buildContext, scopeChain } from './context.js'
 import { scanAgents } from './agents.js'
@@ -65,7 +66,9 @@ export function scan(rootInput: string): ProjectReport {
  */
 export function fetchMcpHealth(root: string, entries: McpEntry[]): Promise<McpEntry[]> {
   return new Promise((res) => {
-    execFile('claude', ['mcp', 'list'], { cwd: root, timeout: 30_000, encoding: 'utf8' }, (_err, stdout) => {
+    const claude = resolveBin('claude')
+    if (!claude) { res(entries); return }
+    execFile(claude, ['mcp', 'list'], { cwd: root, timeout: 30_000, encoding: 'utf8' }, (_err, stdout) => {
       res(applyHealth(entries, stdout ?? ''))
     })
   })

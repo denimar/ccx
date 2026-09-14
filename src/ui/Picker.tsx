@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { Box, Text, useApp, useInput, useStdout } from 'ink'
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { parseProjectsYaml } from '../scan/harness.js'
 import { readJsonc } from '../util/jsonc.js'
 import { HOME, isDir, isFile, listDirs, tilde } from '../util/walk.js'
@@ -42,6 +42,7 @@ export function findProjects(): Candidate[] {
 
 export function Picker({ onPick }: { onPick: (path: string) => void }): React.ReactElement {
   const { exit } = useApp()
+  useEffect(() => { process.stdout.write('\x1b]2;ccx\x07') }, [])
   const { stdout } = useStdout()
   const [query, setQuery] = useState('')
   const [cursor, setCursor] = useState(0)
@@ -83,7 +84,7 @@ export function Picker({ onPick }: { onPick: (path: string) => void }): React.Re
           return (
             <Box key={c.path}>
               <Text color={selected ? color.mauve : color.surface}>{selected ? '❯' : ' '}</Text>
-              <Box width={28}>
+              <Box width={30} marginRight={2}>
                 <Text color={selected ? color.text : color.subtext} bold={selected} wrap="truncate-end"> {c.name}</Text>
               </Box>
               <Text color={color.muted} wrap="truncate-end">{c.group}</Text>

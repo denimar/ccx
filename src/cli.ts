@@ -1,4 +1,5 @@
 import { cmdDoctor } from './commands/doctor.js'
+import { ensurePath } from './util/env.js'
 import { cmdHint } from './commands/hint.js'
 import { cmdOpen } from './commands/open.js'
 import { cmdPanel } from './commands/panel.js'
@@ -32,6 +33,9 @@ const HELP = `
 `
 
 export async function main(argv: string[]): Promise<number> {
+  // a dock launch inherits the bare session PATH — put our own tools back on it
+  ensurePath()
+
   const [first, ...rest] = argv
 
   if (first === '-h' || first === '--help') { process.stdout.write(HELP); return 0 }
@@ -47,9 +51,26 @@ export async function main(argv: string[]): Promise<number> {
   }
 }
 
+/**
+ * Launched from a desktop entry there is no shell left behind to show an
+ * error: the terminal window just disappears. Hold it open instead.
+ */
+async function holdIfDesktop(): Promise<void> {
+  if (!process.argv.includes('--from-desktop') || !process.stdin.isTTY) return
+  process.stdout.write('\n  press enter to close this window…')
+  await new Promise<void>((res) => {
+    process.stdin.setEncoding('utf8')
+    process.stdin.resume()
+    process.stdin.once('data', () => res())
+  })
+}
+
 main(process.argv.slice(2))
-  .then((code) => { if (code) process.exitCode = code })
-  .catch((err: unknown) => {
+  .then(async (code) => {
+    if (code) { process.exitCode = code; await holdIfDesktop() }
+  })
+  .catch(async (err: unknown) => {
     process.stderr.write(`ccx: ${err instanceof Error ? err.message : String(err)}\n`)
     process.exitCode = 1
+    await holdIfDesktop()
   })

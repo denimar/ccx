@@ -1,6 +1,7 @@
 import { execFileSync, spawnSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { resolveBin, sessionPath } from '../util/env.js'
 import { HOME, isFile, tilde } from '../util/walk.js'
 import { color, icon } from '../ui/theme.js'
 
@@ -34,7 +35,33 @@ export async function cmdDoctor(): Promise<number> {
   })
 
   checks.push({ name: 'node >= 20', ok: Number(process.versions.node.split('.')[0]) >= 20, detail: `v${process.versions.node}` })
-  checks.push({ name: 'claude CLI', ok: has('claude'), detail: has('claude') ? 'found' : 'missing', fix: 'install Claude Code' })
+
+  const claudeBin = resolveBin('claude')
+  checks.push({ name: 'claude CLI', ok: Boolean(claudeBin), detail: claudeBin ? tilde(claudeBin) : 'missing', fix: 'install Claude Code' })
+
+  // The check that matters for the dock icon: a desktop launch gets the bare
+  // systemd session PATH, with no ~/.local/bin and no version-manager node on
+  // it. Rather than guess, run the installed shim in exactly that environment.
+  const shim = join(HOME, '.local', 'bin', 'ccx')
+  let desktopOk: boolean | 'warn' = 'warn'
+  let desktopDetail = 'ccx is not installed in ~/.local/bin'
+  if (isFile(shim)) {
+    const probe = spawnSync(shim, ['--version'], {
+      env: { PATH: sessionPath(), HOME },
+      encoding: 'utf8',
+      timeout: 15_000,
+    })
+    desktopOk = probe.status === 0
+    desktopDetail = probe.status === 0
+      ? 'runs with only the session PATH'
+      : `exits ${probe.status}: ${(probe.stderr || probe.stdout || '').trim().split('\n')[0] ?? 'no output'}`
+  }
+  checks.push({
+    name: 'desktop launch',
+    ok: desktopOk,
+    detail: desktopDetail,
+    fix: 'run install/install.sh — the shim and the .desktop Exec must use absolute paths',
+  })
 
   const inKitty = Boolean(process.env.KITTY_WINDOW_ID)
   let rcOk = false
@@ -58,7 +85,16 @@ export async function cmdDoctor(): Promise<number> {
     fix: 'run install/install.sh',
   })
   checks.push({ name: 'tmux fallback', ok: has('tmux') ? true : 'warn', detail: has('tmux') ? 'available' : 'not installed (only needed outside kitty)' })
-  checks.push({ name: 'desktop entry', ok: isFile(desktop) ? true : 'warn', detail: tilde(desktop), fix: 'run install/install.sh' })
+  const execLine = (() => {
+    try { return readFileSync(desktop, 'utf8').split('\n').find((l) => l.startsWith('Exec=')) ?? '' } catch { return '' }
+  })()
+  const execAbsolute = execLine.startsWith('Exec=/') && !/ -e (?!\/)/.test(execLine)
+  checks.push({
+    name: 'desktop entry',
+    ok: isFile(desktop) ? (execAbsolute ? true : false) : 'warn',
+    detail: isFile(desktop) ? (execAbsolute ? tilde(desktop) : 'Exec= uses a bare command name') : tilde(desktop),
+    fix: 'run install/install.sh',
+  })
 
   let favorites = ''
   try { favorites = execFileSync('gsettings', ['get', 'org.gnome.shell', 'favorite-apps'], { encoding: 'utf8' }) } catch { /* not gnome */ }

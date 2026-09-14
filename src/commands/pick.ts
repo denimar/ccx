@@ -3,7 +3,8 @@ import { render } from 'ink'
 import { Picker } from '../ui/Picker.js'
 import { openSplit } from '../split/index.js'
 
-export async function cmdPick(claudeArgs: string[]): Promise<number> {
+export async function cmdPick(args: string[]): Promise<number> {
+  const claudeArgs = args.filter((a) => a !== '--from-desktop')
   let picked: string | undefined
   const app = render(React.createElement(Picker, {
     onPick: (path: string) => { picked = path; app.unmount() },
