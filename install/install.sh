@@ -92,16 +92,27 @@ done
 command -v gtk-update-icon-cache >/dev/null 2>&1 && gtk-update-icon-cache -f -t "$ICON_DIR" >/dev/null 2>&1 || true
 ok "installed icons"
 
-mkdir -p "$APP_DIR"
-KITTY_BIN="$(readlink -f "$(command -v kitty || echo /usr/bin/kitty)")"
-sed -e "s|@KITTY@|${KITTY_BIN}|g" -e "s|@NODE@|${NODE_BIN}|g" -e "s|@CLI@|${REPO}/dist/cli.js|g" \
-    "${REPO}/install/ccx.desktop.in" > "$DESKTOP"
-chmod +x "$DESKTOP"
-command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$APP_DIR" >/dev/null 2>&1 || true
-ok "installed ${DESKTOP}"
+# The launcher opens a kitty window, so without kitty it would only produce an
+# icon that fails silently — exactly the bug this installer is written to avoid.
+KITTY_BIN="$(command -v kitty || true)"
+HAVE_LAUNCHER=0
+if [[ -n "$KITTY_BIN" ]]; then
+  KITTY_BIN="$(readlink -f "$KITTY_BIN")"
+  mkdir -p "$APP_DIR"
+  sed -e "s|@KITTY@|${KITTY_BIN}|g" -e "s|@NODE@|${NODE_BIN}|g" -e "s|@CLI@|${REPO}/dist/cli.js|g" \
+      "${REPO}/install/ccx.desktop.in" > "$DESKTOP"
+  chmod +x "$DESKTOP"
+  command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$APP_DIR" >/dev/null 2>&1 || true
+  HAVE_LAUNCHER=1
+  ok "installed ${DESKTOP}"
+else
+  rm -f "$DESKTOP"
+  warn "kitty not found — skipping the desktop entry and dock icon"
+  warn "the \`ccx\` command still works; install kitty (or tmux) for the split"
+fi
 
 # ---- 5. pin to the dock -----------------------------------------------------
-if command -v gsettings >/dev/null 2>&1 && gsettings get org.gnome.shell favorite-apps >/dev/null 2>&1; then
+if [[ "$HAVE_LAUNCHER" == 1 ]] && command -v gsettings >/dev/null 2>&1 && gsettings get org.gnome.shell favorite-apps >/dev/null 2>&1; then
   python3 - <<'PY'
 import subprocess, ast
 get = subprocess.run(['gsettings','get','org.gnome.shell','favorite-apps'], capture_output=True, text=True)
@@ -112,7 +123,7 @@ if 'ccx.desktop' not in cur:
 else:
     print('  \033[38;2;166;227;161m✔\033[0m already pinned to the dock')
 PY
-else
+elif [[ "$HAVE_LAUNCHER" == 1 ]]; then
   warn "GNOME not detected — skipping the dock shortcut"
 fi
 

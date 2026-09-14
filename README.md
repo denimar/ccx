@@ -47,16 +47,38 @@ left pane, the right pane updates itself.
 
 ## Install
 
+Needs **node ≥ 20** on your PATH. Everything else is optional: kitty (for the split and the dock
+icon), tmux (fallback split), the `claude` CLI (to actually run Claude Code), GNOME (to pin the
+icon). pnpm is used when present, npm otherwise.
+
 ```bash
 git clone https://github.com/denimar/ccx.git
 cd ccx
-./install/install.sh        # build, link, kitty config, desktop entry, dock icon
+./install/install.sh
 ```
 
-Then restart kitty (remote control is a startup option) and run `ccx doctor`.
+That builds it and then:
 
-Uninstall with `./install/install.sh --uninstall`. Every change it makes to `kitty.conf` and
-`.zshrc` is inside a marked `# >>> ccx >>>` block.
+| step | what it does | how to undo |
+|---|---|---|
+| `~/.local/bin/ccx` | a `/bin/sh` shim with absolute paths (so GUI launches work) | removed by `--uninstall` |
+| `~/.config/kitty/kitty.conf` | appends a `# >>> ccx >>>` block enabling remote control + the `splits` layout | block deleted by `--uninstall` |
+| `~/.local/share/icons/…` + `~/.local/share/applications/ccx.desktop` | the launcher; skipped entirely if kitty is not installed | removed by `--uninstall` |
+| GNOME dock | pins `ccx.desktop` to the favorites | unpinned by `--uninstall` |
+| `~/.zshrc` | appends a `# >>> ccx >>>` block sourcing the `chpwd` hint hook | block deleted by `--uninstall` |
+
+Then:
+
+1. **Quit and reopen kitty completely** — `allow_remote_control` is a startup option, so existing
+   windows will not pick it up.
+2. `ccx doctor` — every row should be ✔ (a ▲ is an optional thing you do not have).
+3. `cd` into a project and run `ccx`, or click the dock icon.
+
+**Re-run `install/install.sh` after `git pull`**, and also after switching node versions: the shim
+hardcodes the absolute node path so that a desktop launch — which never sources your shell rc —
+can find it.
+
+Uninstall with `./install/install.sh --uninstall`.
 
 ## Usage
 
