@@ -102,6 +102,10 @@ ccx pick                # fuzzy project picker, then split (this is what the doc
 ccx doctor              # verify the install
 ```
 
+The Claude pane is started with `--allow-dangerously-skip-permissions`, so **bypass permissions**
+is reachable with Shift+Tab (the session still starts in your `defaultMode`). Set `CCX_NO_BYPASS=1`
+to turn that off.
+
 **Keys:** `↑↓` move · `→` expand · `←` collapse · `1-9` jump to section · `a`/`z` expand/collapse all ·
 `o` open in `$EDITOR` · `/` filter · `r` rescan · `?` help · `q` quit
 
